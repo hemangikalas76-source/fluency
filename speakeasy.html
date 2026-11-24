@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speakeasy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout idea: one centred column. A speaking-waveform hero, a daily goal strip, four practice modes in one card. */
+  --bg:#F1F6F4;
+  --surface:#FFFFFF;
+  --ink:#0F2F2C;
+  --muted:#58706C;
+  --line:#D5E1DD;
+  --soft:#E2EEEA;
+  --accent:#F25C2A;
+  --accent-ink:#FFFFFF;
+  --good:#1B8F62;
+  --bad:#CF3F36;
+  --display:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1816;--surface:#132421;--ink:#E7F3F0;--muted:#93AEA9;--line:#25403B;--soft:#1A302C;
+    --accent:#FF7C52;--accent-ink:#1A0A04;--good:#3CC590;--bad:#FF7A70;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1816;--surface:#132421;--ink:#E7F3F0;--muted:#93AEA9;--line:#25403B;--soft:#1A302C;
+  --accent:#FF7C52;--accent-ink:#1A0A04;--good:#3CC590;--bad:#FF7A70;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+.wrap{max-width:760px;margin:0 auto;padding:16px 16px 56px}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 0 4px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.brand svg{width:30px;height:30px}
+.tools{display:flex;align-items:center;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:600;font-size:14px}
+.pill b{font-family:var(--display);font-size:16px;color:var(--accent)}
+select.pill{appearance:none;padding-right:12px;cursor:pointer}
+
+/* hero */
+.hero{padding:28px 0 8px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(40px,9vw,68px);line-height:.98;letter-spacing:-.035em;margin:0 0 12px;text-wrap:balance}
+h1 span{color:var(--accent)}
+.lede{color:var(--muted);margin:0 0 20px;max-width:46ch}
+.wave{display:flex;align-items:center;gap:4px;height:76px;margin:6px 0 18px}
+.wave i{flex:1;max-width:9px;min-width:3px;border-radius:5px;background:var(--accent);height:calc(8px + var(--h)*1px);opacity:.92;transform-origin:center}
+.speaking .wave i,.listening .wave i{animation:bob .8s ease-in-out infinite alternate;animation-delay:calc(var(--i)*-55ms)}
+.listening .wave i{background:var(--good)}
+@keyframes bob{from{transform:scaleY(.3)}to{transform:scaleY(1.35)}}
+
+/* goal */
+.goal{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px}
+.goal .label{font-weight:600;font-size:15px}
+.goal .label small{display:block;color:var(--muted);font-weight:500}
+.segs{display:flex;gap:6px;flex:1;min-width:160px}
+.segs i{flex:1;height:10px;border-radius:6px;background:var(--soft)}
+.segs i.on{background:var(--accent)}
+
+/* tabs */
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:20px 0 14px;background:var(--soft);padding:5px;border-radius:16px}
+.tab{border:0;background:transparent;padding:10px 4px;border-radius:12px;font-weight:600;font-size:15px;color:var(--muted);min-width:0}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+
+/* card */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px}
+.eyebrow{margin:0 0 6px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.big{font-family:var(--display);font-weight:700;font-size:clamp(24px,5.4vw,34px);line-height:1.2;letter-spacing:-.015em;margin:0 0 10px;text-wrap:balance}
+.big.sm{font-size:clamp(19px,4.4vw,24px)}
+.big .w{border-radius:6px;padding:0 2px}
+.big .w.good{background:color-mix(in srgb,var(--good) 22%,transparent)}
+.big .w.bad{background:color-mix(in srgb,var(--bad) 22%,transparent);text-decoration:underline wavy var(--bad);text-underline-offset:5px}
+.note{color:var(--muted);margin:0 0 16px;font-size:15px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.row.end{margin-top:18px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:11px 18px;font-weight:600;min-height:46px}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.ghost{background:transparent}
+.btn[disabled]{opacity:.5;cursor:default}
+.seg{display:inline-flex;gap:4px;background:var(--soft);padding:4px;border-radius:12px;margin-bottom:16px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;border-radius:9px;padding:6px 14px;font-weight:600;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.result{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:var(--soft);font-size:15px}
+.result b{font-family:var(--display);font-size:20px}
+
+/* talk */
+.ringwrap{position:relative;width:176px;height:176px;margin:8px auto 14px}
+.ringwrap svg{width:100%;height:100%}
+.track{fill:none;stroke:var(--soft);stroke-width:10}
+.prog{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round}
+.ringtxt{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.ringtxt span{font-family:var(--display);font-weight:800;font-size:52px;line-height:1;font-variant-numeric:tabular-nums}
+.ringtxt small{color:var(--muted);font-size:13px}
+.stages{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;list-style:none;padding:0;margin:0 0 16px}
+.stages li{border:1px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center;font-size:13px;font-weight:600;color:var(--muted)}
+.stages li.now{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.stages li.past{background:var(--soft)}
+.um{width:100%;display:flex;justify-content:space-between;align-items:center;border:2px dashed var(--line);background:transparent;border-radius:16px;padding:14px 18px;font-weight:600}
+.um b{font-family:var(--display);font-size:28px;color:var(--accent);font-variant-numeric:tabular-nums}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.tile{background:var(--soft);border-radius:14px;padding:12px;text-align:center}
+.tile b{display:block;font-family:var(--display);font-size:28px;font-variant-numeric:tabular-nums}
+.tile span{font-size:13px;color:var(--muted)}
+
+/* lists */
+.list{display:grid;gap:10px;margin-top:4px}
+.item{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.item .t{font-family:var(--display);font-weight:700;font-size:19px;line-height:1.25;flex:1 1 220px;min-width:0}
+.item .t small{display:block;font-family:var(--body);font-weight:500;font-size:14px;color:var(--muted);margin-top:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 14px;font-weight:600;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:600;font-size:15px;opacity:0;pointer-events:none;transition:.25s;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.foot{color:var(--muted);font-size:14px;margin-top:26px;text-align:center}
+@media (max-width:420px){.tab{font-size:13px}.card{padding:18px}}
+@media (prefers-reduced-motion:reduce){.speaking .wave i,.listening .wave i{animation:none}.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><g fill="var(--accent-ink)"><rect x="6" y="13" width="3" height="6" rx="1.5"/><rect x="11" y="8" width="3" height="16" rx="1.5"/><rect x="16" y="11" width="3" height="10" rx="1.5"/><rect x="21" y="6" width="3" height="20" rx="1.5"/></g></svg>
+      Speakeasy
+    </div>
+    <div class="tools">
+      <label class="sr" for="accent" style="position:absolute;left:-9999px">Voice accent</label>
+      <select id="accent" class="pill" aria-label="Voice accent">
+        <option value="en-US">US voice</option>
+        <option value="en-GB">UK voice</option>
+        <option value="en-IN">India voice</option>
+        <option value="en-AU">Australian voice</option>
+      </select>
+      <span class="pill" title="Days in a row">Streak <b id="streak">0</b></span>
+    </div>
+  </header>
+
+  <section class="hero" id="stage">
+    <h1>Say it <span>out loud.</span></h1>
+    <p class="lede">Reading builds vocabulary. Speaking builds fluency. Spend five minutes a day on the second one.</p>
+    <div class="wave" id="wave" aria-hidden="true"></div>
+    <div class="goal">
+      <div class="label">Today's goal<small id="goaltext">0 of 5 done</small></div>
+      <div class="segs" id="segs" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <div class="tabs" role="tablist" aria-label="Practice mode">
+    <button class="tab" role="tab" id="tab-repeat" data-tab="repeat" aria-selected="true">Repeat</button>
+    <button class="tab" role="tab" id="tab-talk" data-tab="talk" aria-selected="false">Talk 60</button>
+    <button class="tab" role="tab" id="tab-twist" data-tab="twist" aria-selected="false">Twisters</button>
+    <button class="tab" role="tab" id="tab-phrases" data-tab="phrases" aria-selected="false">Phrases</button>
+  </div>
+
+  <main id="panel" role="tabpanel" aria-live="polite"></main>
+
+  <p class="foot">Do any five activities to hit today's goal. Your streak grows each day you do at least one.</p>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- content ---------- */
+var SENTENCES={
+  easy:[
+    {t:"Could you say that one more time, please?",n:"Let your voice rise a little on “please”."},
+    {t:"I'm looking forward to meeting you.",n:"Stress “forward”. Blend “looking forward” smoothly."},
+    {t:"What do you usually do on weekends?",n:"Voice falls at the end of a wh-question."},
+    {t:"Thanks for waiting. I really appreciate it.",n:"Give “really” a long, warm vowel."},
+    {t:"Can I have a glass of water, please?",n:"“Glass of water” flows together: glassuh water."},
+    {t:"Let me think about that for a second.",n:"Say “think” with your tongue between your teeth."}
+  ],
+  medium:[
+    {t:"I'd rather work from home on Fridays, if that's okay.",n:"“I'd rather” is quick and light. Stress “home”."},
+    {t:"Honestly, I wasn't expecting the meeting to run this long.",n:"Pause briefly after “Honestly”."},
+    {t:"If we start early, we should be able to finish by noon.",n:"Pause at the comma, then keep a steady pace."},
+    {t:"She asked whether I had already booked the tickets.",n:"“Whether” starts with a soft w, not a v."},
+    {t:"It depends on how much time we have.",n:"Stress “depends” and “time”. Shrink the small words."},
+    {t:"I've been learning English for a while, and I'm getting more confident.",n:"Keep one smooth breath up to the comma."}
+  ],
+  hard:[
+    {t:"Although the schedule is tight, I believe we can deliver quality work on time.",n:"Pause at the comma. Stress “tight”, “believe”, “quality”."},
+    {t:"The thorough review revealed three issues that nobody had anticipated.",n:"Watch the th in “thorough” and “three”."},
+    {t:"Would you mind walking me through the process step by step?",n:"“Would you” becomes “woodja” in natural speech."},
+    {t:"Despite the challenges, the team managed to exceed every expectation.",n:"Stress “challenges”, “exceed” and “expectation”."},
+    {t:"I would have called earlier, but my phone had run out of battery.",n:"“Would have” sounds like “woodov”."},
+    {t:"Rather than rushing, let's make sure we understand the problem completely.",n:"Slow down on “understand” and “completely”."}
+  ]
+};
+var TWISTERS=[
+  {t:"She sells seashells by the seashore.",n:"Sound: S and SH",l:"Easy"},
+  {t:"Red lorry, yellow lorry.",n:"Sound: R and L",l:"Easy"},
+  {t:"Fresh French fried fish.",n:"Sound: F and FR",l:"Easy"},
+  {t:"Peter Piper picked a peck of pickled peppers.",n:"Sound: P",l:"Medium"},
+  {t:"How can a clam cram in a clean cream can?",n:"Sound: K and L",l:"Medium"},
+  {t:"I scream, you scream, we all scream for ice cream.",n:"Sound: S and R",l:"Medium"},
+  {t:"Unique New York, you know you need unique New York.",n:"Sound: N and Y",l:"Hard"},
+  {t:"The thirty-three thieves thought that they thrilled the throne throughout Thursday.",n:"Sound: TH",l:"Hard"}
+];
+var TOPICS=[
+  "Describe a person who taught you something important.",
+  "What would you change about your daily routine?",
+  "Explain your job to a ten-year-old.",
+  "Tell us about the best trip you have ever taken.",
+  "A skill you want to learn this year, and why.",
+  "Is working from home better than working in an office?",
+  "Describe your favorite meal and how it is made.",
+  "A small thing that made your week better.",
+  "What advice would you give your younger self?",
+  "What makes a good friend?",
+  "A place in your city every visitor should see.",
+  "Is technology more helpful or more distracting?"
+];
+var STAGES=[{n:"Point",s:0,e:10},{n:"Reason",s:10,e:30},{n:"Example",s:30,e:50},{n:"Wrap up",s:50,e:60}];
+var PHRASES={
+  Work:[
+    {t:"Let's circle back to this after lunch.",n:"Postpone a topic politely."},
+    {t:"Could you share your screen?",n:"Ask in an online meeting."},
+    {t:"I'll follow up by the end of the day.",n:"Promise a clear next step."},
+    {t:"That makes sense. Let me add one point.",n:"Join a discussion."},
+    {t:"Sorry, you cut out. Could you repeat that?",n:"A bad connection."}
+  ],
+  Travel:[
+    {t:"How far is it from here?",n:"Asking for directions."},
+    {t:"I'd like to check in, please.",n:"At a hotel desk."},
+    {t:"Is this seat taken?",n:"On a train or in a cafe."},
+    {t:"Could you recommend a local dish?",n:"At a restaurant."},
+    {t:"Where can I buy a ticket?",n:"At a station."}
+  ],
+  "Small talk":[
+    {t:"How's your day going so far?",n:"A friendly opener."},
+    {t:"That sounds like fun!",n:"React with warmth."},
+    {t:"What brings you here?",n:"Meeting someone at an event."},
+    {t:"Nice to meet you. I've heard good things.",n:"A first introduction."},
+    {t:"We should catch up soon.",n:"Ending a chat kindly."}
+  ],
+  Opinions:[
+    {t:"From my point of view, it's worth trying.",n:"Share your view."},
+    {t:"I see what you mean, but I'm not sure.",n:"Disagree gently."},
+    {t:"I'm not totally convinced yet.",n:"Express doubt."},
+    {t:"That's a fair point.",n:"Accept a good argument."},
+    {t:"To be honest, I prefer the second option.",n:"Choose between two things."}
+  ]
+};
+var GOAL=5;
+
+/* ---------- storage ---------- */
+function load(){try{return JSON.parse(localStorage.getItem('speakeasy-v1')||'{}')}catch(e){return {}}}
+function save(){try{localStorage.setItem('speakeasy-v1',JSON.stringify(S))}catch(e){}}
+var S=load();
+S.streak=S.streak||0;S.last=S.last||'';S.day=S.day||'';S.count=S.count||0;
+function ds(d){return d.toLocaleDateString('en-CA')}
+function today(){return ds(new Date())}
+function yest(){var d=new Date();d.setDate(d.getDate()-1);return ds(d)}
+function roll(){
+  if(S.day!==today()){S.day=today();S.count=0}
+  if(S.last&&S.last!==today()&&S.last!==yest()){S.streak=0}
+}
+function credit(){
+  roll();
+  S.count++;
+  if(S.last!==today()){S.streak=(S.last===yest()?S.streak:0)+1;S.last=today()}
+  save();paint();
+  if(S.count===GOAL)toast("Daily goal reached. Great work!");
+}
+function paint(){
+  roll();
+  document.getElementById('streak').textContent=S.streak;
+  var segs=document.getElementById('segs');segs.innerHTML='';
+  for(var i=0;i<GOAL;i++){var s=document.createElement('i');if(i<S.count)s.className='on';segs.appendChild(s)}
+  var left=Math.max(0,GOAL-S.count);
+  document.getElementById('goaltext').textContent=S.count>=GOAL?'Goal reached. Keep going if you like.':S.count+' of '+GOAL+' done';
+}
+
+/* ---------- helpers ---------- */
+var $=function(s){return document.querySelector(s)};
+var toastTimer;
+function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('show')},2600)}
+function rnd(n,not){if(n<2)return 0;var k;do{k=Math.floor(Math.random()*n)}while(k===not);return k}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+
+/* waveform in hero */
+(function(){
+  var w=$('#wave'),n=34;
+  for(var i=0;i<n;i++){
+    var b=document.createElement('i');
+    var h=10+Math.round(Math.abs(Math.sin(i*.55)+Math.sin(i*.21+1))*17);
+    b.style.setProperty('--h',h);b.style.setProperty('--i',i);w.appendChild(b);
+  }
+})();
+
+/* speech out */
+var accent='en-US';
+function voice(){
+  if(!('speechSynthesis' in window))return null;
+  var v=speechSynthesis.getVoices();
+  for(var i=0;i<v.length;i++){if(v[i].lang.replace('_','-')===accent)return v[i]}
+  for(var j=0;j<v.length;j++){if(v[j].lang.slice(0,2)==='en'&&v[j].lang.replace('_','-').slice(3)===accent.slice(3))return v[j]}
+  return null;
+}
+function speak(text,rate){
+  if(!('speechSynthesis' in window)){toast("Audio playback isn't supported in this browser.");return}
+  try{
+    speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance(text);
+    u.lang=accent;var v=voice();if(v)u.voice=v;u.rate=rate||0.95;
+    var end=function(){document.body.classList.remove('speaking')};
+    u.onstart=function(){document.body.classList.add('speaking')};
+    u.onend=end;u.onerror=end;
+    speechSynthesis.speak(u);
+  }catch(e){toast("Couldn't play audio here.")}
+}
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=function(){}}
+$('#accent').addEventListener('change',function(e){accent=e.target.value;speak("Hello! This is how I sound.",0.95)});
+
+/* speech in (optional) */
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+var recog=null;
+function norm(s){return s.toLowerCase().replace(/[^a-z0-9' ]+/g,' ').split(/\s+/).filter(Boolean)}
+function score(target,heard){
+  var tw=target.split(/\s+/),th=norm(target),hh=norm(heard),p=0,hits=0,marks=[];
+  for(var i=0;i<th.length;i++){
+    var f=-1;
+    for(var k=p;k<Math.min(hh.length,p+4);k++){if(hh[k]===th[i]){f=k;break}}
+    if(f>=0){hits++;p=f+1;marks.push(true)}else marks.push(false);
+  }
+  return {pct:Math.round(100*hits/Math.max(1,th.length)),marks:marks,words:tw};
+}
+function listen(cb){
+  if(!SR){cb('unsupported');return}
+  try{
+    if(recog){try{recog.abort()}catch(e){}}
+    recog=new SR();recog.lang=accent;recog.interimResults=false;recog.maxAlternatives=1;
+    var got=false;
+    recog.onresult=function(e){got=true;cb(null,e.results[0][0].transcript)};
+    recog.onerror=function(e){if(!got){got=true;cb(e.error||'error')}};
+    recog.onend=function(){document.body.classList.remove('listening');if(!got){got=true;cb('nospeech')}};
+    document.body.classList.add('listening');
+    recog.start();
+  }catch(e){document.body.classList.remove('listening');cb('error')}
+}
+
+/* ---------- views ---------- */
+var tab='repeat';
+var R={level:'easy',i:0,res:null,msg:''};
+var TW={i:0};
+var T={phase:'idle',topic:0,t0:0,iv:null,fill:0,el:0};
+var P={cat:'Work',said:{}};
+var panel=$('#panel');
+
+function viewRepeat(){
+  var item=SENTENCES[R.level][R.i];
+  var words=item.t.split(/\s+/).map(function(w,k){
+    var c=R.res&&R.res.marks[k]!==undefined?(R.res.marks[k]?' good':' bad'):'';
+    return '<span class="w'+c+'">'+esc(w)+'</span>';
+  }).join(' ');
+  var lv=['easy','medium','hard'].map(function(l){
+    return '<button data-act="level" data-v="'+l+'" aria-pressed="'+(R.level===l)+'">'+l.charAt(0).toUpperCase()+l.slice(1)+'</button>';
+  }).join('');
+  var mic=SR?'<button class="btn" data-act="mic">Score my voice</button>':'';
+  var res='';
+  if(R.res)res='<p class="result"><b>'+R.res.pct+'% matched.</b> '+(R.res.pct>=85?'Clear and accurate.':R.res.pct>=60?'Close. Listen again and focus on the underlined words.':'Slow down and try once more.')+'</p>';
+  else if(R.msg)res='<p class="result">'+esc(R.msg)+'</p>';
+  return '<div class="card">'+
+    '<div class="seg" role="group" aria-label="Level">'+lv+'</div>'+
+    '<p class="eyebrow">Listen, then say it</p>'+
+    '<p class="big">'+words+'</p>'+
+    '<p class="note">'+esc(item.n)+'</p>'+
+    '<div class="row"><button class="btn primary" data-act="hear">Listen</button><button class="btn" data-act="slow">Slow</button>'+mic+'</div>'+
+    res+
+    '<p class="note" style="margin-top:16px">Say it aloud, three times. Then rate yourself honestly.</p>'+
+    '<div class="row"><button class="btn ghost" data-act="again">Try again</button><button class="btn primary" data-act="gotit">Got it, next</button></div>'+
+  '</div>';
+}
+
+function viewTalk(){
+  var t=TOPICS[T.topic];
+  if(T.phase==='idle'){
+    return '<div class="card"><p class="eyebrow">Your topic</p><p class="big">'+esc(t)+'</p>'+
+      '<p class="note">Talk for 60 seconds without stopping. Four cues will guide you: make a point, give a reason, share an example, wrap up. Tap the counter each time you catch yourself saying um, uh or like.</p>'+
+      '<div class="row"><button class="btn primary" data-act="start">Start 60 seconds</button><button class="btn" data-act="shuffle">New topic</button></div></div>';
+  }
+  if(T.phase==='run'){
+    var st=STAGES.map(function(s,k){return '<li id="st'+k+'">'+s.n+'</li>'}).join('');
+    return '<div class="card"><p class="big sm">'+esc(t)+'</p>'+
+      '<div class="ringwrap"><svg viewBox="0 0 160 160" aria-hidden="true"><circle class="track" cx="80" cy="80" r="70"/><circle id="ring" class="prog" cx="80" cy="80" r="70" stroke-dasharray="439.8" stroke-dashoffset="0" transform="rotate(-90 80 80)"/></svg>'+
+      '<div class="ringtxt"><span id="secs">60</span><small>seconds left</small></div></div>'+
+      '<ol class="stages">'+st+'</ol>'+
+      '<button class="um" data-act="um"><span>I caught a filler word</span><b id="umc">'+T.fill+'</b></button>'+
+      '<div class="row end"><button class="btn ghost" data-act="stop">Finish early</button></div></div>';
+  }
+  var per=T.el>0?Math.round(T.fill/(T.el/60)*10)/10:0;
+  var tip=T.el<20?'That was short. Try for the full minute next time.':per<=2?'Very controlled. Try a harder topic next.':per<=6?'Good. When you feel an "um" coming, pause in silence instead.':'Slow down and breathe between ideas. Silence sounds more confident than fillers.';
+  return '<div class="card"><p class="eyebrow">Nicely done</p><p class="big sm">'+esc(t)+'</p>'+
+    '<div class="tiles"><div class="tile"><b>'+Math.round(T.el)+'</b><span>seconds</span></div><div class="tile"><b>'+T.fill+'</b><span>fillers</span></div><div class="tile"><b>'+per+'</b><span>per minute</span></div></div>'+
+    '<p class="note">'+tip+'</p>'+
+    '<div class="row"><button class="btn primary" data-act="shuffle">New topic</button><button class="btn" data-act="start">Same topic again</button></div></div>';
+}
+
+function viewTwist(){
+  var x=TWISTERS[TW.i];
+  return '<div class="card"><p class="eyebrow">'+x.l+' &middot; '+esc(x.n)+'</p>'+
+    '<p class="big">'+esc(x.t)+'</p>'+
+    '<p class="note">Hear it slowly first. Then say it three times, getting a little faster each time. Clear beats fast.</p>'+
+    '<div class="row"><button class="btn" data-act="tw" data-r="0.6">Slow</button><button class="btn primary" data-act="tw" data-r="0.95">Normal</button><button class="btn" data-act="tw" data-r="1.3">Fast</button></div>'+
+    '<div class="row end"><button class="btn ghost" data-act="twskip">Skip</button><button class="btn primary" data-act="twdone">Clean run, next</button></div></div>';
+}
+
+function viewPhrases(){
+  var chips=Object.keys(PHRASES).map(function(c){return '<button class="chip" data-act="cat" data-v="'+c+'" aria-pressed="'+(P.cat===c)+'">'+c+'</button>'}).join('');
+  var items=PHRASES[P.cat].map(function(p,k){
+    var key=P.cat+k,done=P.said[key];
+    return '<div class="item"><div class="t">'+esc(p.t)+'<small>'+esc(p.n)+'</small></div>'+
+      '<div class="row" style="margin:0"><button class="btn" data-act="say" data-t="'+esc(p.t)+'" aria-label="Hear: '+esc(p.t)+'">Hear</button>'+
+      '<button class="btn'+(done?'':' primary')+'" data-act="said" data-k="'+key+'"'+(done?' disabled':'')+'>'+(done?'Said it':'I said it')+'</button></div></div>';
+  }).join('');
+  return '<div class="card"><p class="eyebrow">Useful phrases</p><div class="chips" role="group" aria-label="Category">'+chips+'</div><div class="list">'+items+'</div></div>';
+}
+
+function render(){
+  var v={repeat:viewRepeat,talk:viewTalk,twist:viewTwist,phrases:viewPhrases}[tab];
+  panel.innerHTML=v();
+  var tabs=document.querySelectorAll('.tab');
+  for(var i=0;i<tabs.length;i++)tabs[i].setAttribute('aria-selected',tabs[i].dataset.tab===tab);
+}
+
+/* ---------- timer ---------- */
+function tick(){
+  var el=(Date.now()-T.t0)/1000;
+  if(el>=60){finishTalk(60);return}
+  var ring=$('#ring');if(!ring)return;
+  ring.setAttribute('stroke-dashoffset',(439.8*el/60).toFixed(1));
+  $('#secs').textContent=Math.ceil(60-el);
+  for(var k=0;k<STAGES.length;k++){
+    var li=$('#st'+k);if(!li)continue;
+    li.className=el>=STAGES[k].e?'past':(el>=STAGES[k].s?'now':'');
+  }
+}
+function startTalk(){
+  T.phase='run';T.fill=0;T.t0=Date.now();render();tick();
+  clearInterval(T.iv);T.iv=setInterval(tick,200);
+}
+function finishTalk(el){
+  clearInterval(T.iv);
+  if(T.phase!=='run')return;
+  T.el=el;T.phase='done';
+  if(el>=20)credit();
+  render();
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',function(e){
+  var tb=e.target.closest('.tab');
+  if(tb){
+    if(tab==='talk'&&T.phase==='run'&&tb.dataset.tab!=='talk'){clearInterval(T.iv);T.phase='idle'}
+    tab=tb.dataset.tab;render();return;
+  }
+  var b=e.target.closest('[data-act]');if(!b)return;
+  var a=b.dataset.act;
+  if(a==='level'){R.level=b.dataset.v;R.i=rnd(SENTENCES[R.level].length);R.res=null;R.msg='';render()}
+  else if(a==='hear'){speak(SENTENCES[R.level][R.i].t,0.95)}
+  else if(a==='slow'){speak(SENTENCES[R.level][R.i].t,0.6)}
+  else if(a==='mic'){
+    R.res=null;R.msg='Listening... say the sentence now.';render();
+    var target=SENTENCES[R.level][R.i].t;
+    listen(function(err,txt){
+      if(err){
+        R.msg=(err==='not-allowed'||err==='service-not-allowed'||err==='unsupported')?"Voice scoring isn't available in this view. Say it aloud and use the buttons below to rate yourself.":err==='nospeech'||err==='no-speech'?"I didn't hear anything. Try again a little closer to the mic.":"Voice scoring didn't work this time. Rate yourself with the buttons below.";
+        R.res=null;
+      }else{R.res=score(target,txt);R.msg=''}
+      render();
+    });
+  }
+  else if(a==='again'){R.res=null;R.msg='';render();speak(SENTENCES[R.level][R.i].t,0.95)}
+  else if(a==='gotit'){credit();R.i=rnd(SENTENCES[R.level].length,R.i);R.res=null;R.msg='';render()}
+  else if(a==='shuffle'){T.topic=rnd(TOPICS.length,T.topic);T.phase='idle';render()}
+  else if(a==='start'){startTalk()}
+  else if(a==='um'){T.fill++;var c=$('#umc');if(c)c.textContent=T.fill}
+  else if(a==='stop'){finishTalk((Date.now()-T.t0)/1000)}
+  else if(a==='tw'){speak(TWISTERS[TW.i].t,parseFloat(b.dataset.r))}
+  else if(a==='twskip'){TW.i=rnd(TWISTERS.length,TW.i);render()}
+  else if(a==='twdone'){credit();TW.i=rnd(TWISTERS.length,TW.i);render()}
+  else if(a==='cat'){P.cat=b.dataset.v;render()}
+  else if(a==='say'){speak(b.dataset.t,0.9)}
+  else if(a==='said'){P.said[b.dataset.k]=true;credit();render()}
+});
+
+R.i=rnd(SENTENCES.easy.length);
+T.topic=rnd(TOPICS.length);
+TW.i=rnd(TWISTERS.length);
+paint();render();
+})();
+</script>
+</body>
+</html>
